@@ -43,16 +43,15 @@ export default class SocketServer {
     );
   }
   private askFromModel = async (text: string) => {
-    console.log(text);
     const askPromise = new Promise((resolve, reject) => {
       const requestHeader = {
         method: 'POST',
-        url: 'http://localhost:5000/api/v1/ask',
+        url: 'http://localhost:9000/api/match-input',
         headers: {
           'Content-Type': 'application/json',
           'X-Requested-With': 'XMLHttpRequest'
         },
-        data: text
+        data: { input: text }
       };
       return axios(requestHeader)
         .then((response) => {
@@ -61,7 +60,7 @@ export default class SocketServer {
         })
         .catch((err) => {
           console.log(err);
-          reject(err);
+          reject(err.message);
         });
     });
     return askPromise;
@@ -82,7 +81,7 @@ export default class SocketServer {
       try {
         const { chat_text } = data;
         if (isEmpty(chat_text) || chat_text.length < 2) {
-          this.sendUserEmit(socket, { error: 'No message' }, 'error');
+          this.sendUserEmit(socket, 'No message', 'error');
           return;
         }
         const history = this.users.find(
@@ -93,9 +92,9 @@ export default class SocketServer {
           history.promps.push(chat_text);
         }
         // socket.to(socket.id).emit('success', 'success');
-        this.askFromModel(chat_text)
-          .then(() => {
-            this.sendUserEmit(socket, 'Амжилттай хүлээн авлаа', 'success');
+        await this.askFromModel(chat_text)
+          .then((response: any) => {
+            this.sendUserEmit(socket, response?.data || '', 'success');
           })
           .catch((err) => {
             this.sendUserEmit(socket, err.message, 'error');
