@@ -1,7 +1,7 @@
 import { Server as HttpServer } from 'http';
 import isEmpty from 'lodash/isEmpty';
 import { Server as SocketIOServer, Socket } from 'socket.io';
-
+import axios from 'axios';
 export default class SocketServer {
   public static instance: SocketServer;
   public io: SocketIOServer;
@@ -45,10 +45,24 @@ export default class SocketServer {
   private askFromModel = async (text: string) => {
     console.log(text);
     const askPromise = new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (text.length < 4) reject('урт хүрэхгүй');
-        resolve('model response');
-      }, 4000);
+      const requestHeader = {
+        method: 'POST',
+        url: 'http://localhost:5000/api/v1/ask',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        data: text
+      };
+      return axios(requestHeader)
+        .then((response) => {
+          console.log(response);
+          resolve(response);
+        })
+        .catch((err) => {
+          console.log(err);
+          reject(err);
+        });
     });
     return askPromise;
   };

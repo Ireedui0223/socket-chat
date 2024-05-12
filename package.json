@@ -18,6 +18,7 @@
     "@types/lodash": "^4.17.1",
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.12.11",
+    "axios": "^1.6.8",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
