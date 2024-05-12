@@ -29,20 +29,15 @@ export default class SocketServer {
     this.io.on('connection', this.socketHandle);
   }
 
-  private sendUserEmit(
-    socket: Socket,
-    socket_id: string,
-    body: any,
-    event: string
-  ) {
+  private sendUserEmit(socket: Socket, body: any, event: string) {
     console.log(
       '------------------ SENDING EVENT TO TARGET ------------------'
     );
     console.log(
-      `Message sent socketId (${socket_id}) by emit event (${event})`
+      `Message sent socketId (${socket.id}) by emit event (${event})`
     );
 
-    socket.to(socket_id).emit(event, body);
+    socket.emit(event, body);
     console.log(
       '---------------------------------------------------------------'
     );
@@ -53,14 +48,11 @@ export default class SocketServer {
       setTimeout(() => {
         if (text.length < 4) reject('урт хүрэхгүй');
         resolve('model response');
-      }, 2000);
+      }, 4000);
     });
     return askPromise;
   };
-
   socketHandle = async (socket: Socket) => {
-    console.log(socket.id);
-
     const history = this.users.find(
       (connection) => connection.socketId === socket.id
     );
@@ -76,12 +68,7 @@ export default class SocketServer {
       try {
         const { chat_text } = data;
         if (isEmpty(chat_text) || chat_text.length < 2) {
-          this.sendUserEmit(
-            socket,
-            socket.id,
-            { error: 'No message' },
-            'error'
-          );
+          this.sendUserEmit(socket, { error: 'No message' }, 'error');
           return;
         }
         const history = this.users.find(
@@ -91,27 +78,16 @@ export default class SocketServer {
         if (history) {
           history.promps.push(chat_text);
         }
+        // socket.to(socket.id).emit('success', 'success');
         this.askFromModel(chat_text)
-          .then((response) => {
-            console.log(response, 'response');
-            this.sendUserEmit(
-              socket,
-              socket.id,
-              { response: 'Амжилттай хүлээн авлаа' },
-              'success_response'
-            );
+          .then(() => {
+            this.sendUserEmit(socket, 'Амжилттай хүлээн авлаа', 'success');
           })
           .catch((err) => {
-            this.sendUserEmit(
-              socket,
-              socket.id,
-              { error: err.message },
-              'error'
-            );
+            this.sendUserEmit(socket, err.message, 'error');
           });
       } catch (error) {
-        console.log('error');
-        console.log(error);
+        this.sendUserEmit(socket, error.message, 'error');
       }
     });
 
